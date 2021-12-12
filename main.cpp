@@ -1,261 +1,118 @@
 #include <iostream>
 #include <cstdlib>
+#include "Deck.h"
+#include "Gameplay.h"
 
-using namespace std;
+const int seed = 4;                                 
 
-void shuffle(int cards[]);
-void printCard(int id);
-int cardValue(int id);
-void printHand(int hand[], int numCards);
-int getBestScore(int hand[], int numCards);
+int main() {
+    /*rand() generates same sequence each time if srand() is not called with a seed value
+    To get different sequence of shuffled cards on each playthrough, srand is used here */
+    srand(seed);
 
-const int NUM_CARDS = 52;
-const int value[13] = {2,3,4,5,6,7,8,9,10,10,10,10,11};
+    Deck deck;
+    Gameplay game;
+    int cards[52];
+    int dhand[9];
+    int phand[9];    
 
-void shuffle(int cards[])
-{
-	for(int i= NUM_CARDS-1; i>0; i--){
-		int temp;
-		int j = rand()%(i+1);
-		temp = cards[i];
-		cards[i]=cards[j];
-		cards[j]= temp; 
-	}
+    bool repeat = true;
 
-}
+    while(repeat){
+  	    char choice;
+  	    int phandsize = 2, dhandsize = 2;
 
-void printCard(int id)
-{
-	switch(id%13){
-		case 0: 
-			cout << "2-";
-			break;
-		case 1: 
-			cout << "3-";
-			break;
-		case 2: 
-			cout << "4-";
-			break;
-		case 3: 
-			cout << "5-";
-			break;
-		case 4: 
-			cout << "6-";
-			break;
-		case 5: 
-			cout << "7-";
-			break;
-		case 6: 
-			cout << "8-";
-			break;
-		case 7: 
-			cout << "9-";
-			break;
-		case 8: 
-			cout << "10-";
-			break;
-		case 9: 
-			cout << "J-";
-			break;
-		case 10: 
-			cout << "Q-";
-			break;
-		case 11: 
-			cout << "K-";
-			break;
-		case 12: 
-			cout << "A-";
-			break;
-		default: break;
-	}
+  	    for(int i=0; i<deck.getNumCards();i++){
+            //A "deck" of 52 cards (or numbers) initialised
+  	    	cards[i]=i;
+  	    }
 
-	switch(id/13){
-		case 0: 
-			cout << "H";
-			break;
-		case 1: 
-			cout << "S";
-			break;
-		case 2: 
-			cout << "D";
-			break;
-		case 3: 
-			cout << "C";
-			break;
-		default: break;
-	}
+  	    deck.shuffle(cards);
 
-	cout << " ";
-}
+        //Inititally, the dealer and player are dealt 2 cards
+  	    for(int i=0; i<2; i++){
+  	    	phand[i] = cards[2*i];          //Simple mathematical expression to deal different cards to dealer and player
+  	    	dhand[i] = cards[2*i+1];
+  	    }
 
-int cardValue(int id)
-{
-	int val = id%13;
-	return value[val];
+        //In the game, one of the dealer's card's is dealt face-down, while both the cards of the player are face-up
+  	    cout << "Dealer: " << "? " ; 
+  	    game.printCard(dhand[1]);
+  	    cout << endl;
+  	    cout << "Player: "; 
+  	    game.printHand(phand,phandsize);
 
-}
+        //In case either of the scores exceed 21, that player is bust so that condition must be checked beforehand
+        while(deck.getBestScore(phand,phandsize)<21){
+  		    cout << "Type 'h' to hit and 's' to stay: ";
+  		    cin >> choice;
 
-void printHand(int hand[], int numCards)
-{
- 	for(int i=0; i<numCards; i++){
- 		printCard(hand[i]);
- 		cout << " ";
- 	}
+  		    if(choice == 'h'){
+                //The next card from the deck is dealt and the handsize is increased by 1 
+  		    	phand[phandsize] = cards[2+phandsize];
+  		    	phandsize++;
+  		    	cout << "Player: ";
+  		    	game.printHand(phand,phandsize);
+    
+  		    }
+  		    else 
+  		    	break;
+  	    }
 
- 	cout << "\n";
-}
-
-int getBestScore(int hand[], int numCards)
-{
-	int sum = 0;
-	bool addedAce = false;
-	int AcesAdded = 0;
-
-	for(int i=0; i<numCards; i++){
-		
-		if((hand[i]%13==12)&&(sum+11>21))
-			sum++;
-		else
-			sum+=value[hand[i]%13];
-		
-		if (hand[i]%13 == 12){
-			addedAce = true;
-			AcesAdded++;
-		}
-	}
-
-	if(addedAce&&sum>21){
-		sum = 0;
-		for(int i=0; i<numCards; i++){
-			if(hand[i]%13==12)
-				sum++;
-			else
-				sum+=value[hand[i]%13];
-		}
-	}
-
-	return sum;
-}
-
-int main(int argc, char* argv[]){
-  if(argc < 2){
-    cout << "Error - Please provide the seed value." << endl;
-    return 1;
-  }
-
-  int seed = atoi(argv[1]);
-  srand(seed);
-
-  int cards[52];
-  int dhand[9];
-  int phand[9];
-
- bool repeat = true;
-
-  while(repeat){
-  	
-  	char choice;
-  	int phandsize = 2, dhandsize = 2;
-
-  	for(int i=0; i<NUM_CARDS;i++){
-  		cards[i]=i;
-  	}
-
-  	shuffle(cards);
-
-  	for(int i=0; i<2; i++){
-
-  		phand[i] = cards[2*i];
-  		dhand[i] = cards[2*i+1];
-  	} // Deal starting hand
-
-  	cout << "Dealer: " << "? " ; 
-  	printCard(dhand[1]);
-  	cout << endl;
-  	cout << "Player: "; 
-  	printHand(phand,phandsize);
-
-
-  	while(getBestScore(phand,phandsize)<21){
-
-  		cout << "Type 'h' to hit and 's' to stay: ";
-  		cin >> choice;
-
-  		if(choice == 'h'){
-
-  			phand[phandsize] = cards[2+phandsize];
-  			phandsize++;
-  			cout << "Player: ";
-  			printHand(phand,phandsize);
- 
-  		}
-
-  		else 
-  			break;
-
-  	}
-
-  		if(getBestScore(phand,phandsize)>21){
+        //This conditional checks for the player's status in the game
+        if(deck.getBestScore(phand,phandsize)>21){
   			cout << "Player Busts!\n" << "Lose ";
-  			cout << getBestScore(phand,phandsize) << " "; 
-  			cout << getBestScore(dhand,dhandsize) << endl;
+  			cout << deck.getBestScore(phand,phandsize) << " "; 
+  			cout << deck.getBestScore(dhand,dhandsize) << endl;
   		}
 
-  		else if(getBestScore(phand,phandsize<=21)){
-  			
-  			while(getBestScore(dhand,dhandsize)<17){
+  		else if(deck.getBestScore(phand,phandsize<=21)){
+            //If dealer's score is below 17, he is required to take a card, with no option of staying.
+            //Foloowing block deals a card to dealer
+  			while(deck.getBestScore(dhand,dhandsize)<17){
   				dhand[dhandsize] = cards[dhandsize+phandsize];
   				dhandsize++;
   			}
 
-
   			cout << "Dealer: "; 
-  			printHand(dhand,dhandsize);
+  			game.printHand(dhand,dhandsize);
   			cout << endl;
 
-  			if(getBestScore(dhand,dhandsize)>21){
-
+            //This conditional checks the dealer's status in the game
+            if(deck.getBestScore(dhand,dhandsize)>21){
   				cout << "Dealer Busts!\n";
-  				cout << "Win " << getBestScore(phand,phandsize); 
-  				cout << " " << getBestScore(dhand,dhandsize);
+  				cout << "Win " << deck.getBestScore(phand,phandsize); 
+  				cout << " " << deck.getBestScore(dhand,dhandsize);
   			}
 
+            //Final condtional to check if the dealer or player has a better hand
   			else{
-
-  				if(getBestScore(phand,phandsize)>getBestScore(dhand,dhandsize)){
-  					cout << "Win " << getBestScore(phand,phandsize); 
-  					cout << " " << getBestScore(dhand,dhandsize) << endl;
+  				if(deck.getBestScore(phand,phandsize)>deck.getBestScore(dhand,dhandsize)){
+  					cout << "Win " << deck.getBestScore(phand,phandsize); 
+  					cout << " " << deck.getBestScore(dhand,dhandsize) << endl;
   				}
 
-  				else if(getBestScore(phand,phandsize)<getBestScore(dhand,dhandsize)){
-  					cout << "Lose " << getBestScore(phand,phandsize); 
-  					cout << " " << getBestScore(dhand,dhandsize) << endl;
+  				else if(deck.getBestScore(phand,phandsize)<deck.getBestScore(dhand,dhandsize)){
+  					cout << "Lose " << deck.getBestScore(phand,phandsize); 
+  					cout << " " << deck.getBestScore(dhand,dhandsize) << endl;
   				}
 
   				else{
-  					cout << "Tie " << getBestScore(phand,phandsize); 
-  					cout << " " << getBestScore(dhand,dhandsize) << endl;
+  					cout << "Tie " << deck.getBestScore(phand,phandsize); 
+  					cout << " " << deck.getBestScore(dhand,dhandsize) << endl;
   				}
   			}
-  			
-  		}
-			
-			cout << "\n";
-			cout << "Play Again? y/n: ";
-			cin >> choice;
+        }
+        cout << "\n";
+		cout << "Play Again? y/n: ";
+		cin >> choice;
 
 		if(choice == 'y')
 			repeat = true;
 		
-
 		else{
 			repeat = false;
 			break;
 		}
-  	}
-
-  	return 0;
-
- }
-  	
-	
+    }
+}
